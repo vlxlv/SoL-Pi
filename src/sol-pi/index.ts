@@ -47,6 +47,19 @@ export function createSolPiExtension(
 				initialized = true;
 				currentConfig = loadConfig(ctx);
 				registerConfiguredFeatures(pi, currentConfig);
+
+				if (ctx.mode === "tui") {
+					const isAnyActive =
+						currentConfig.actionFusion ||
+						currentConfig.observationPack ||
+						currentConfig.onlineContextCompact ||
+						currentConfig.evidencePreservingReducer;
+					if (isAnyActive) {
+						ctx.ui.notify("⚡ SoL-Pi loaded: active", "info");
+					} else {
+						ctx.ui.notify("⚡ SoL-Pi loaded: off (/sol-pi on to enable)", "info");
+					}
+				}
 			}
 			updateSolPiStatusBar(ctx, currentConfig);
 		});
