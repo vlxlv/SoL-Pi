@@ -149,10 +149,19 @@ describe("SoL-Pi TUI enhancements & stats", () => {
 		expect(currentConfig.onlineContextCompact).toBe(true);
 		expect(notify).toHaveBeenCalledWith(expect.stringContaining("⚡ SoL-Pi enabled!"), "info");
 
-		// 3. /sol-pi off
+		// 3. /sol-pi all
+		await handler("all", cmdCtx);
+		expect(currentConfig.actionFusion).toBe(true);
+		expect(currentConfig.observationPack).toBe(true);
+		expect(currentConfig.evidencePreservingReducer).toBe(true);
+		expect(currentConfig.onlineContextCompact).toBe(true);
+		expect(notify).toHaveBeenCalledWith(expect.stringContaining("⚡ SoL-Pi ALL enabled!"), "info");
+
+		// 4. /sol-pi off
 		await handler("off", cmdCtx);
 		expect(currentConfig.actionFusion).toBe(false);
 		expect(currentConfig.observationPack).toBe(false);
+		expect(currentConfig.evidencePreservingReducer).toBe(false);
 		expect(notify).toHaveBeenCalledWith(expect.stringContaining("⚡ SoL-Pi disabled."), "info");
 	});
 });

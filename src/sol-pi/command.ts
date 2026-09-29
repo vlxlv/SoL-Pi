@@ -55,6 +55,37 @@ export function registerSolPiCommands(
 				return;
 			}
 
+			if (command === "all") {
+				const agentDir = getAgentDir();
+				if (!existsSync(agentDir)) mkdirSync(agentDir, { recursive: true });
+				const configPath = join(agentDir, "sol-pi.json");
+				const updatedConfig: SolPiConfig = {
+					...config,
+					version: 1,
+					actionFusion: true,
+					observationPack: true,
+					evidencePreservingReducer: true,
+					onlineContextCompact: true,
+				};
+				writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2), "utf8");
+				options.setConfig(updatedConfig);
+				updateSolPiStatusBar(ctx, updatedConfig);
+
+				ctx.ui.notify(
+					`⚡ SoL-Pi ALL enabled!\nAll 4 mechanisms (Fusion, Pack, Reducer, Compact) are now active.\nConfig saved to: ${configPath}`,
+					"info",
+				);
+
+				if (typeof ctx.reload === "function") {
+					try {
+						await ctx.reload();
+					} catch {
+						// Fail gracefully
+					}
+				}
+				return;
+			}
+
 			if (command === "off" || command === "disable") {
 				const agentDir = getAgentDir();
 				if (!existsSync(agentDir)) mkdirSync(agentDir, { recursive: true });
@@ -118,6 +149,7 @@ export function registerSolPiCommands(
 				"",
 				"Usage:",
 				"  /sol-pi on      - Enable recommended features (Fusion, Pack, Compact)",
+				"  /sol-pi all     - Enable ALL 4 features (Fusion, Pack, Reducer, Compact)",
 				"  /sol-pi off     - Disable all features",
 				"  /sol-pi status  - Show this status and savings summary",
 			);
