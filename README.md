@@ -109,6 +109,17 @@ Enable additional mechanisms only after reviewing their configuration and securi
 
 For the complete schema, see [Configuration](docs/configuration.md). Coding agents and automated environments should follow the canonical [agent installation and configuration protocol](agents-install.md), which describes an all-enabled configuration checked with `scripts/check-sol-pi-config.mjs --require-all-enabled`.
 
+### TUI Status Bar & Slash Command
+
+SoL-Pi provides visible feedback and interactive control inside Pi's TUI:
+
+- **Status Bar Indicator**: Displays active mechanisms at a glance (e.g. `⚡ SoL-Pi [Fusion|Pack]` or `⚡ SoL-Pi (off · /sol-pi)`), along with accumulated savings metrics.
+- **`/sol-pi` Command**:
+  - `/sol-pi on` — Enable recommended features (`actionFusion`, `observationPack`, `onlineContextCompact`) and write to `~/.pi/agent/sol-pi.json`.
+  - `/sol-pi off` — Disable all mechanisms.
+  - `/sol-pi status` — Show enabled mechanisms, session savings (turns avoided, tokens saved), and provider status.
+- **Zero-Config Auto Mode**: Set `export SOL_PI_AUTO=1` in your shell to automatically activate recommended mechanisms when no `sol-pi.json` is present.
+
 ## Storage and Security
 
 ObservationPack and Evidence-Preserving Reducer store session-specific archives under:

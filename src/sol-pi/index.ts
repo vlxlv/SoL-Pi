@@ -4,11 +4,13 @@
  */
 
 import { getAgentDir, type ExtensionAPI, type ExtensionContext, type ExtensionFactory } from "@earendil-works/pi-coding-agent";
-import { loadSolPiConfig, type SolPiConfig } from "./config.ts";
+import { registerSolPiCommands } from "./command.ts";
+import { DEFAULT_CONFIG, loadSolPiConfig, type SolPiConfig } from "./config.ts";
 import { registerActionFusion } from "./extensions/action-fusion/index.ts";
 import { registerEvidencePreservingReducer } from "./extensions/evidence-preserving-reducer/index.ts";
 import { registerObservationPack } from "./extensions/observation-pack/index.ts";
 import { registerOnlineContextCompact } from "./extensions/online-context-compact/index.ts";
+import { updateSolPiStatusBar } from "./tui.ts";
 
 export function registerConfiguredFeatures(pi: ExtensionAPI, config: SolPiConfig): void {
 	if (config.actionFusion) registerActionFusion(pi);
@@ -29,10 +31,24 @@ export function createSolPiExtension(
 ): ExtensionFactory {
 	return (pi) => {
 		let initialized = false;
+		let currentConfig: SolPiConfig = DEFAULT_CONFIG;
+
+		if (typeof pi.registerCommand === "function") {
+			registerSolPiCommands(pi, {
+				getConfig: () => currentConfig,
+				setConfig: (updated) => {
+					currentConfig = updated;
+				},
+			});
+		}
+
 		pi.on("session_start", (_event, ctx) => {
-			if (initialized) return;
-			initialized = true;
-			registerConfiguredFeatures(pi, loadConfig(ctx));
+			if (!initialized) {
+				initialized = true;
+				currentConfig = loadConfig(ctx);
+				registerConfiguredFeatures(pi, currentConfig);
+			}
+			updateSolPiStatusBar(ctx, currentConfig);
 		});
 	};
 }

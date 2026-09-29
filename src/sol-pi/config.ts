@@ -35,6 +35,17 @@ export const DEFAULT_CONFIG: SolPiConfig = Object.freeze({
 	cacheWriteReadRatio: DEFAULT_CACHE_WRITE_READ_RATIO,
 });
 
+export const RECOMMENDED_CONFIG: SolPiConfig = Object.freeze({
+	version: 1,
+	actionFusion: true,
+	observationPack: true,
+	evidencePreservingReducer: false,
+	evidencePreservingReducerModel: DEFAULT_REDUCER_MODEL,
+	evidencePreservingReducerProvider: DEFAULT_REDUCER_PROVIDER,
+	onlineContextCompact: true,
+	cacheWriteReadRatio: DEFAULT_CACHE_WRITE_READ_RATIO,
+});
+
 const FEATURE_KEYS = [
 	"actionFusion",
 	"observationPack",
@@ -64,7 +75,10 @@ export function loadSolPiConfig(
 	allowProjectConfig = false,
 ): SolPiConfig {
 	const path = findConfigPath(cwd, agentDir, allowProjectConfig);
-	if (!path) return DEFAULT_CONFIG;
+	if (!path) {
+		const autoOn = process.env.SOL_PI_AUTO === "1" || process.env.SOL_PI_AUTO === "true";
+		return autoOn ? RECOMMENDED_CONFIG : DEFAULT_CONFIG;
+	}
 
 	let parsed: unknown;
 	try {

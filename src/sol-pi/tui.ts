@@ -5,6 +5,8 @@
 
 import type { ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
 import { type Component, Container, Text } from "@earendil-works/pi-tui";
+import type { SolPiConfig } from "./config.ts";
+import { recordSavings, sessionStats } from "./stats.ts";
 
 export type SolPiTuiMechanism =
 	| "Action Fusion"
@@ -12,6 +14,7 @@ export type SolPiTuiMechanism =
 	| "Luna Delegating"
 	| "Online Context Compact";
 
+export const SOL_PI_STATUS_KEY = "sol-pi";
 const STATUS_KEY = "sol-pi-savings";
 const STATUS_DURATION_MS = 4_000;
 const INTEGER_FORMAT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -35,6 +38,49 @@ export function formatSavingsBytes(value: number): string {
 	return `${INTEGER_FORMAT.format(bytes)} B removed from future prompts`;
 }
 
+export function formatTokensAbbreviated(count: number): string {
+	if (count >= 1_000_000) return `${compactDecimal(count / 1_000_000)}M tokens`;
+	if (count >= 1_000) return `${compactDecimal(count / 1_000)}k tokens`;
+	return `${count} tokens`;
+}
+
+export function getSolPiStatusText(config: SolPiConfig, modelProvider?: string): string {
+	const active: string[] = [];
+	if (config.actionFusion) active.push("Fusion");
+	if (config.observationPack) active.push("Pack");
+	if (config.evidencePreservingReducer) active.push("Reducer");
+	if (config.onlineContextCompact) active.push("Compact");
+
+	if (active.length === 0) {
+		return "⚡ SoL-Pi (off · /sol-pi)";
+	}
+
+	const isAgy = modelProvider === "agy" || modelProvider === "pi-agy-pool" || modelProvider?.includes("agy");
+	if (isAgy) {
+		return `⚡ SoL-Pi [${active.join("|")}] · AGY active`;
+	}
+
+	if (sessionStats.tokensSaved > 0 || sessionStats.roundTripsAvoided > 0) {
+		const parts: string[] = [];
+		if (sessionStats.roundTripsAvoided > 0) {
+			parts.push(`${sessionStats.roundTripsAvoided} turn${sessionStats.roundTripsAvoided > 1 ? "s" : ""}`);
+		}
+		if (sessionStats.tokensSaved > 0) {
+			parts.push(formatTokensAbbreviated(sessionStats.tokensSaved));
+		}
+		return `⚡ SoL-Pi [${active.join("|")}] · saved ${parts.join(", ")}`;
+	}
+
+	return `⚡ SoL-Pi [${active.join("|")}]`;
+}
+
+export function updateSolPiStatusBar(context: ExtensionContext, config: SolPiConfig): void {
+	if (context.mode !== "tui") return;
+	const provider = context.model?.provider;
+	const text = getSolPiStatusText(config, provider);
+	context.ui.setStatus(SOL_PI_STATUS_KEY, text);
+}
+
 export function renderSolPiTool(
 	theme: Theme,
 	mechanism: SolPiTuiMechanism,
@@ -54,6 +100,7 @@ export function showSolPiSavings(
 	mechanism: SolPiTuiMechanism,
 	saving: string,
 ): void {
+	recordSavings(mechanism, saving);
 	if (context.mode !== "tui") return;
 	const message = `⚡ SoL-Pi · ${mechanism}\nMoney saved · ${saving}`;
 	context.ui.notify(message, "info");
